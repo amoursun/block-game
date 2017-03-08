@@ -1,0 +1,220 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>方块</title>
+</head>
+	<style type="text/css">
+		
+    	.box{ width:421px;  margin:100px auto;}
+		.box div{ 
+			width:40px; 
+			height:40px;
+			color:#fff;			
+			border:1px solid #000; 
+			float:left;			
+		 }
+		.current{ background:red; 
+			border:5px solid red;
+			width:35px; height:35px;
+			color:red !important;
+			/*box-shadow: 1px 1px  5px 5px #990000 inset;*/
+			box-shadow: 1px 1px  5px 5px red inset;
+		}
+		.wall{background:green;
+			//box-shadow: 1px 1px  5px 5px #009999 inset;
+			box-shadow: 1px 1px  5px 5px green inset;
+			
+		}
+		
+    </style>
+<script type="text/javascript">
+	window.onload=function(){
+		
+			var L=[[0,0],[0,1],[0,2],[1,2]];
+			var Tian=[[0,0],[0,1],[1,1],[1,0]];
+			var Z=[[0,0],[0,1],[1,1],[1,2]];
+			var I=[[0,1],[0,2],[0,3],[0,4]];
+			var T=[[0,1],[1,0],[1,1],[1,2]];
+						
+			var box=document.getElementById('box');
+			var boxs=box.getElementsByTagName('div');
+			var timer;
+			
+			
+			
+			
+			//--------------------方块类---------------------
+			 function Dia(type,pos){
+					//类型
+				this.type=type,
+					//坐标
+				this.pos=pos,
+					//拼成盒子的4个盒子，一维
+				this.element=[],					
+					//是否到达运动
+				this.isMove=true,				
+					//落到下面的棋子叠加成墙；					
+				this.wall=[];
+					//方向
+				this.direction="down";
+					//棋子是竖着还是躺着
+				this.stand=true;
+				
+					//将坐标 转成1维的值的方法
+				this.xyToNum=function (x,y){return (y-1)*10+x-1;},
+					
+					//填充一维组的方法
+				this.ToElement=function(x,y){
+						var offset;
+						switch(this.type){
+								case "L": offset=L;break;
+								case "Tian":offset=Tian; break;
+								case "I":offset=I;break;
+								case "Z":offset=Z; break;
+								case "T":offset=T;break;							
+							}
+							
+							for(var i=0; i<4;i++){
+								if(this.stand){
+									this.element[i]=this.xyToNum(x,y)+this.xyToNum(offset[i][0]+1,offset[i][1]+1);	
+								}else{									
+									this.element[i]=this.xyToNum(x,y)+this.xyToNum(offset[i][1]+1,offset[i][0]+1);
+								}
+							  }	
+						},
+					
+					//画自身的方法					
+					this.Draw=function(){
+						
+						for(var i=0;i<boxs.length;i++){	
+							boxs[i].className='';			
+							for(var j=0;j<this.element.length;j++){
+								 if(boxs[i].innerHTML==	this.element[j]){
+									  boxs[i].className="current";								 }				 
+							}
+						}
+							//画墙
+							for(var j=0;j<this.wall.length;j++){
+								 if(boxs[i].innerHTML==	this.wall[j]){
+									  boxs[i].className="wall";	
+									  boxs[i].style.color = 'green';	
+								 }
+							}
+							
+						}
+					},
+					//获取自身类型 和坐标
+					 this.getTypeOrPos=function(){
+						 	var result=[];
+						 	var types=["L","I","Tian","Z","T"];
+							
+							result[0]=types[parseInt(Math.random()*5)];
+							result[1]=parseInt(Math.random()*9);
+							
+							return result;
+						 },
+						 
+					//移动的方法
+					this.Gun=function(){				
+						//for(var i=0; i<this.element.length;i++){
+//							this.element[i]+=10;
+//					    }	
+							//判断是否撞墙
+				
+							if(this.IsIntersect()){						
+								
+								this.wall=this.wall.concat(this.element);
+								console.log(this.wall);
+								var result=this.getTypeOrPos();
+								this.pos=[result[1],-3];
+								this.type=result[0];
+								this.ToElement(this.pos[0],this.pos[1]);			
+							}else{
+								switch(this.direction){									
+									case "left":this.pos[0]-=1; break;
+									case "right":this.pos[0]+=1;break;
+									case "down":this.pos[1]+=1;break;									
+								}	
+								this.direction="down";					
+								this.ToElement(this.pos[0],this.pos[1]);									
+								this.Draw();
+							}	
+							console.log(this.pos);			
+																	
+			         },
+					//设置方向
+					this.setDir=function(e){
+							
+							switch(e.keyCode){
+								case 37: this.direction="left";break;								
+								case 39: this.direction="right";break;
+								case 40: this.direction="down";break;
+								case 38: if(this.stand==true){
+												this.stand=false;
+											}else{
+												this.stand=true;	
+											}									
+									break;
+							}
+					},
+
+					//设置碰撞检测	 
+					 this.IsIntersect=function(){	
+					 	var result=false;
+					 	console.log(this.wall);				 
+						
+							
+							for(var j=0;j<this.element.length;j++){
+								if(this.element[j]>190){
+									return true;
+								}else{
+									for(var i=0; i<this.wall.length;i++){								
+										//如果移动到上方
+										if(this.wall[i]==(this.element[j]+10)|| this.element[j]>190){
+											 return true;
+										}
+								}
+							}
+						}
+						
+						return result;						 
+					 }
+		   		 }	
+				 
+				 //-------------------------------------------------------------
+				
+				
+			//-------------------------创建地图-----------------------
+			var htmls="";
+			for(var i=0;i<200;i++){
+				htmls+='<div>'+i+'</div>';		
+			}
+			box.innerHTML=htmls;
+			
+			//将坐标值变成数字
+			//创建方块对象
+			var a=new Dia("L",[3,0]);
+			a.ToElement(3,0);		
+			a.Draw();
+			//按键事件
+			window.onkeydown=function(e){
+				a.setDir(e);				
+			}
+			
+			//设置定时器
+			 timer=setInterval(function(){ a.Gun();},500);
+			
+
+		};
+
+	
+	
+</script>
+
+<body>
+	<div class="box" id="box"></div>
+   
+ 
+</body>
+</html>
